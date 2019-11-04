@@ -1,37 +1,36 @@
 package com.zarina.fibonacci.rest
 
 import com.twitter.concurrent.AsyncStream
-import com.twitter.finagle.Thrift
-import com.zarina.fibonacci.thrift.FibonacciService
-import com.zarina.fibonacci.thrift.FibonacciService.GetFibonacciAt
 import com.twitter.finagle.Http
 import com.twitter.util.{Await, Future}
 import com.twitter.io.Buf
+import io.circe._
 import io.finch._
 import io.finch.syntax._
 import shapeless._
 import io.finch.circe._
 
-object FibonacciRestService extends App {
-  val clientServicePerEndpoint: FibonacciService.ServicePerEndpoint =
-    Thrift.client.servicePerEndpoint[FibonacciService.ServicePerEndpoint](
-      "localhost:8080",
-      "fibonacci-server"
-    )
-
-  def getNext(i: Int): Future[Long] =
-    clientServicePerEndpoint.getFibonacciAt(GetFibonacciAt.Args(i))
-
-  def mkStream(i: Int, limit: Long): AsyncStream[Long] = AsyncStream.fromFuture(getNext(i)).flatMap { n =>
-    if(n > limit)
-      AsyncStream.empty
-    else
-      n +:: mkStream(i + 1, limit)
+object FibonacciRestService extends App with FibonacciThiftConnector {
+  def encodeErrorList(es: List[Exception]): Json = {
+    val messages = es.map(x => Json.fromString(x.getMessage))
+    Json.obj("errors" -> Json.arr(messages: _*))
   }
 
-  val fibonacci: Endpoint[AsyncStream[Buf]] = get("fibonacci" :: path[Long]) { (num: Long) =>
-   val sequence = mkStream(0, num).map(n => Buf.Utf8(n.toString + "\n"))
-   Ok(sequence)
+  implicit val encodeException: Encoder[Exception] = Encoder.instance({
+    case e: io.finch.Errors => encodeErrorList(e.errors.toList)
+    case e: io.finch.Error =>
+      e.getCause match {
+        case e: io.circe.Errors => encodeErrorList(e.errors.toList)
+        case err => Json.obj("message" -> Json.fromString(e.getMessage))
+      }
+    case e: Exception => Json.obj("message" -> Json.fromString(e.getMessage))
+  })
+
+  val fibonacci: Endpoint[AsyncStream[Buf]] = get("fibonacci" :: path[Long].shouldNot("be less than 1") {
+    _ < 1
+  }) { (num: Long) =>
+    val sequence = mkStream(0, num).map(n => Buf.Utf8(n.toString + "\n"))
+    Ok(sequence)
   } handle {
     case e: Exception => BadRequest(e)
   }
