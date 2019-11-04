@@ -16,16 +16,26 @@ Frameworks used:
 ## Running
 Use SBT to run 
 ```
->sbt
+sbt
 >project fibonacciServer
 >run
 ```
 ```
->sbt
+sbt
 >project proxyService
 >run
 ```
 
+Or build jars with sbt 
+```
+sbt
+>assemby
+```
+Jars will be put into `<module>/target/scala-2.12/` dir. And then execute jars
+```
+java -jar fibonacciServer-assembly-0.0.1.jar
+```
+
 ## Testing
 Rest endpoint to test 
-http://localhost:8081/fibonacci/<number>
+`http://localhost:8081/fibonacci/<number>`
