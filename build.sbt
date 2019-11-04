@@ -45,7 +45,9 @@ lazy val proxyService = (project in file("proxy-service"))
     commonSettings,
     libraryDependencies ++= commonDependencies,
     libraryDependencies ++= Seq(
-      "com.twitter" %% "finagle-http" % "19.10.0"
+      "com.twitter" %% "finagle-http" % "19.10.0",
+      "com.github.finagle" %% "finch-core" % "0.31.0",
+      "com.github.finagle" %% "finch-circe" % "0.31.0"
     )
   )
   .dependsOn(common)
