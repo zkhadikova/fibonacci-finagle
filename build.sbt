@@ -1,4 +1,4 @@
-name := "fibonacci-service"
+name := "fibonacci-finagle"
 
 organization in ThisBuild := "com.zarina"
 scalaVersion in ThisBuild := "2.12.1"
@@ -36,6 +36,7 @@ lazy val fibonacciServer = (project in file("fibonacci-server"))
   .settings(
     commonSettings,
     libraryDependencies ++= commonDependencies,
+    mainClass in assembly := Some("com.zarina.fibonacci.calc.FibonacciCalculator")
   )
   .dependsOn(common % "compile->compile")
   .disablePlugins(ScroogeSBT)
@@ -48,15 +49,19 @@ lazy val proxyService = (project in file("proxy-service"))
       "com.twitter" %% "finagle-http" % "19.10.0",
       "com.github.finagle" %% "finch-core" % "0.31.0",
       "com.github.finagle" %% "finch-circe" % "0.31.0"
-    )
+    ),
+    mainClass in assembly := Some("com.zarina.fibonacci.rest.FibonacciRestService")
   )
   .dependsOn(common)
   .disablePlugins(ScroogeSBT)
 
 
 lazy val commonSettings = Seq(
+  assemblyMergeStrategy in assembly := {
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+  }
 )
-
 
 lazy val commonDependencies = Seq(
   "com.twitter" %% "finagle-core" % "19.10.0",
