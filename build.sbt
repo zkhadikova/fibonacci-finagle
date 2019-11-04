@@ -34,7 +34,8 @@ lazy val common = (project in file("common"))
 
 lazy val fibonacciServer = (project in file("fibonacci-server"))
   .settings(
-    commonSettings
+    commonSettings,
+    libraryDependencies ++= commonDependencies,
   )
   .dependsOn(common % "compile->compile")
   .disablePlugins(ScroogeSBT)
@@ -58,6 +59,7 @@ lazy val commonSettings = Seq(
 lazy val commonDependencies = Seq(
   "com.twitter" %% "finagle-core" % "19.10.0",
   "org.slf4j" % "slf4j-api" % "1.7.25",
-  "org.slf4j" % "slf4j-log4j12" % "1.7.25"
-
+  "org.slf4j" % "slf4j-log4j12" % "1.7.25",
+  "org.scalactic" %% "scalactic" % "3.0.8",
+  "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
